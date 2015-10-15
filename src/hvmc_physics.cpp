@@ -1,11 +1,13 @@
 #include "hvmc_physics.h"
-
+#include <iostream>
 void RigidBody::Update( f32 dt )
 {
+
 }
 
 void RigidBody::ApplyForce( vec2 const& f )
 {
+   this->position = position + f/1000;
 }
 
 void RigidBody::ApplyImpulse( vec2 const& impulse, vec2 const& contactVector )
@@ -78,5 +80,9 @@ RigidBody* PhysicsSystem::AddWall( vec2 const& pos, vec2 const& dims )
 
 void PhysicsSystem::Update( f32 dt )
 {    
+    for(u_int16_t i = 0 ; i< rigidBodies.size();i++){
+        rigidBodies.at(i)->ApplyForce(gravity);
+    }
+
 }
 
