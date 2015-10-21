@@ -3,7 +3,7 @@
 
 void RigidBody::Update( f32 dt )
 {
-  
+
 }
 
 void RigidBody::ApplyForce( vec2 const& f )
@@ -79,7 +79,7 @@ RigidBody* PhysicsSystem::AddSphere( vec2 const& pos, f32 radius )
 
 RigidBody* PhysicsSystem::AddBox( vec2 const& pos, vec2 const& dims )
 {
-    RigidBody* body = new RigidBody; 
+    RigidBody* body = new RigidBody;
     
     body->forces = { 0.f, 0.f };
     body->im = 1.f; // 1 kg
@@ -144,14 +144,20 @@ void PhysicsSystem::Update( f32 dt )
     // Détection de collision
     for(auto & rb1: rigidBodies)
     {
-        for(auto & rb2: rigidBodies)
+        if(rb1->collider.type==RIGID_BODY_SPHERE)
         {
-            vec2 tmp = (rb1->position - rb2->position);
-            f32 diff_centre = tmp{0} + tmp{1};
-            f32 diff_rayon = (rb1->collider.radius + rb2->collider.radius) * (rb1->collider.radius + rb2->collider.radius);
+            for(auto & rb2: rigidBodies)
+            {
+                if(rb2->collider.type==RIGID_BODY_SPHERE)
+                {
+                    vec2 tmp = (rb2->position - rb1->position);
+                    f32 diff_centre = Length(tmp);
+                    f32 diff_rayon = (rb1->collider.radius + rb2->collider.radius) * (rb1->collider.radius + rb2->collider.radius);
 
-            if(diff_rayon > diff_centre)
-                std::cerr << "il y a eu collision" << std::endl;
+                    if(diff_rayon <= diff_centre)
+                        std::cerr << "il y a eu collision" << std::endl;
+                }
+            }
         }
     }
 
