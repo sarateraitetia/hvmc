@@ -28,47 +28,59 @@ struct RigidBody
     RigidBody() {}
     ~RigidBody() {}
     
-    void Update( f32 dt ); // mise à jour de la position
+    void Update( f32 dt ); // MAJ de la vitesse et de la position 
     
-    void ApplyForce( vec2 const& force );//
-    void ApplyImpulse( vec2 const& impulse, vec2 const& contactVector );// pour les collisions
+    void ApplyForce( vec2 const& force ); // A FAIRE !!
+    void ApplyImpulse( vec2 const& impulse, vec2 const& contactVector ); // A FAIRE !!
+    // pour le collisions (plus tard)
     
-    void SetKinematic(); // utilisé pour les murs, si on veut dire que l'objet a un masse infini. met la Imasse à 0 
-    void SetGravityMode( int mode ); // on peut ignorer c'est pour la gravity
+    void SetKinematic(); // pour les murs, mais la masse et l'inverse de
+    // la masse à 0
+    void SetGravityMode( int mode ); // on s'en fout
+
+
+    // ------------------------------------------------ SARA
+    void IntegradeForces(f32 dt);
+    void IntegradeVelocities(f32 dt);
+    // -----------------------------------------------------
+
+
     
-    // étant donné qu'on aime pas les divisions, on a créer l'inverse de la masse et celle de l'inertie 
-    // pour faire en sorte que les objets ne bougent pas, il faut metter une masse d'infini, hors pas bon donc on fait l'inverse => 0
-    
-    f32 I = 0.f;  // inertia (pareil que pour la masse mais en rotation ex: plus elle est grde, plus il est dur de faire tourner
-    f32 iI = 0.f; // inverse inertia
+    f32 I = 0.f;  // inertia -> masse mais pour les rotations
+    f32 iI = 0.f; // inverse inertia est précalculé 
+    // 1) on n'aime pas les divisions en info
+    // 2) on veut pas que les objets bougent (= masse de 0)
     f32 m = 0.f;  // mass
     f32 im = 0.f; // inverse mass
     
-    int gravityMode = 1;
+    int gravityMode = 1; // objet tombe ou pas
+    // on peut l'ignorer en disant que les objets tombent par défaut
 
     vec2 forces;
     vec2 position;
     vec2 velocity;
 
     f32 torque = 0.f;
-    f32 rotation = 0.f; // quantité de rotation
-    f32 angularVelocity = 0.f; // vitesse de rotation
+    f32 rotation = 0.f; 
+    f32 angularVelocity = 0.f;
 
     Collider collider;
 };
 
-struct PhysicsSystem
+struct PhysicsSystem // moteur physique
 {
-    bool Init(); // met la gravité à 9.8
+    bool Init(); // mets la gravité à 0.9
     void Cleanup();
     
-    void Update( f32 dt ); // todo
+    void Update( f32 dt ); // A FAIRE !!
+    // à appeler sur les rigidBodies
     
-    RigidBody* AddSphere( vec2 const& pos, f32 radius );//ignorer
-    RigidBody* AddBox( vec2 const& pos, vec2 const& dims );//ignorer
-    RigidBody* AddWall( vec2 const& pos, vec2 const& dims );//ignorer
+    // Déjà écris - ne pas toucher sauf pour changer la massed 'un objet
+    RigidBody* AddSphere( vec2 const& pos, f32 radius );
+    RigidBody* AddBox( vec2 const& pos, vec2 const& dims );
+    RigidBody* AddWall( vec2 const& pos, vec2 const& dims );
 
-    std::vector<RigidBody*> rigidBodies;//ignorer
+    std::vector<RigidBody*> rigidBodies;
     vec2 gravity;
 };
 
