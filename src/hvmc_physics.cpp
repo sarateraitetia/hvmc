@@ -1,4 +1,5 @@
 #include "hvmc_physics.h"
+#include "hvmc_collisions.h"
 #include <iostream>
 
 void RigidBody::Update( f32 dt )
@@ -18,7 +19,7 @@ void RigidBody::ApplyForce( vec2 const& f )
 }
 
 // ----------------- SARA
-void RigidBody::IntegradeForces(f32 dt)
+void RigidBody::IntegrateForces(f32 dt)
 {
     vec2 a = this->im * this->forces;
 
@@ -26,9 +27,12 @@ void RigidBody::IntegradeForces(f32 dt)
     //this->angularVelocity += rb->torque * dt; // 2ème méthode
 }
 
-void RigidBody::IntegradeVelocities(f32 dt)
+void RigidBody::IntegrateVelocities(f32 dt)
 {
-    this->position += this->velocity * dt;
+    if(I!=0.f && m!=0.f)
+    {
+        this->position += this->velocity * dt;
+    }
     //this->rotation += this->w * dt
 }
 
@@ -54,12 +58,13 @@ bool PhysicsSystem::Init()
 void PhysicsSystem::Cleanup()
 {
     rigidBodies.clear();
+
 }
 
 RigidBody* PhysicsSystem::AddSphere( vec2 const& pos, f32 radius )
 {
     RigidBody* body = new RigidBody;
-    
+
     body->forces = { 0.f, 0.f };
     body->im = 1.f; // 1 kg
     body->iI = 1.f;
@@ -69,7 +74,7 @@ RigidBody* PhysicsSystem::AddSphere( vec2 const& pos, f32 radius )
     // ----------------
     body->position = pos;
     body->velocity = { 0.f, 0.f };
-
+    //    body->angularVelocity = 1.0f;
     body->collider.type = RIGID_BODY_SPHERE;
     body->collider.radius = radius;
 
@@ -80,7 +85,7 @@ RigidBody* PhysicsSystem::AddSphere( vec2 const& pos, f32 radius )
 RigidBody* PhysicsSystem::AddBox( vec2 const& pos, vec2 const& dims )
 {
     RigidBody* body = new RigidBody;
-    
+
     body->forces = { 0.f, 0.f };
     body->im = 1.f; // 1 kg
 
@@ -92,7 +97,7 @@ RigidBody* PhysicsSystem::AddBox( vec2 const& pos, vec2 const& dims )
 
     body->position = pos;
     body->velocity = { 0.f, 0.f };
-    
+
     body->collider.type = RIGID_BODY_BOX;
     body->collider.dims = dims;
 
@@ -107,9 +112,9 @@ RigidBody* PhysicsSystem::AddWall( vec2 const& pos, vec2 const& dims )
     body->im = 0.f;
 
     // ----------------- SARA
-    body->iI = 1.f;
-    body->m = 1.f;
-    body->I = 1.f;
+    //    body->iI = 1.f;
+    //    body->m = 0.f;
+    //    body->I = 1.f;
     // ----------------
 
     body->position = pos;
@@ -121,45 +126,66 @@ RigidBody* PhysicsSystem::AddWall( vec2 const& pos, vec2 const& dims )
     return body;
 }
 
+
 void PhysicsSystem::Update( f32 dt )
 {
+
     // Add Gravity
+    //    std::cerr << dt << std::endl;
     for(auto & rb: rigidBodies)
     {
         rb->forces += rb->m * gravity;
-        rb->ApplyForce(rb->m * gravity);
+        //rb->ApplyForce(rb->m * gravity); // 2ème méthode
 
-        rb->IntegradeForces(dt);
+        //rb->IntegrateForces(dt);
 
-        rb->IntegradeVelocities(dt);
+        //rb->IntegrateVelocities(dt);
     }
 
-    // Clear forces
-    for(auto & rb: rigidBodies)
+    // Détection de collision entre les objets
+    std::vector<CollisionInfo> collisions;
+    u32 count = rigidBodies.size();
+    for(u32 i=0; i<count-1; ++i)
     {
-        rb->forces = {0.0, 0.0};
-        rb->torque = {0.0};
-    }
-
-    // Détection de collision
-    for(auto & rb1: rigidBodies)
-    {
-        if(rb1->collider.type==RIGID_BODY_SPHERE)
+        for(u32 j=i+1; j<count; ++j)
         {
-            for(auto & rb2: rigidBodies)
-            {
-                if(rb2->collider.type==RIGID_BODY_SPHERE)
-                {
-                    vec2 tmp = (rb2->position - rb1->position);
-                    f32 diff_centre = Length(tmp);
-                    f32 diff_rayon = (rb1->collider.radius + rb2->collider.radius) * (rb1->collider.radius + rb2->collider.radius);
+            CollisionInfo info;
+            RigidBody* a = rigidBodies[i];
+            RigidBody* b = rigidBodies[j];
 
-                    if(diff_rayon <= diff_centre)
-                        std::cerr << "il y a eu collision" << std::endl;
-                }
-            }
+            if(collide(a, b, info))
+                collisions.push_back(info);
         }
     }
 
+    // Integrate forces
+    for(auto& rb : rigidBodies)
+        rb->IntegrateForces(dt);
+
+    // Solve contacts (appliquer impulsions)
+    for(auto const& collision: collisions)
+        collision.Solve();
+
+    // Integrate velocities
+    for(auto& rb : rigidBodies)
+        rb->IntegrateVelocities(dt);
+
+//    for(auto const & collision : collisions )
+//        collision.CorrectPositions();
+    // Clear forces
+    for(auto & rb: rigidBodies)
+    {
+        rb->forces = {0.f, 0.f};
+        rb->torque = {0.f};
+    }
+
+
+
+
+    // Passe de correction de position par rapport à la normale au contact
 }
+
+
+
+
 
