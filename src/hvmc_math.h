@@ -26,7 +26,7 @@ struct vec2
 //     union
 //     {
 //         f32 v[2] = { 0 };
-// 
+//
 //         struct
 //         {
 //             f32 x, y;
@@ -76,7 +76,6 @@ inline vec2 operator/( vec2 const& v, f32 s )
     vec2 result{ v.x /s, v.y / s };
     return result;
 }
-
 inline f32 Dot( vec2 const& v, vec2 const& w )
 {
     f32 result = v.x * w.x + v.y * w.y;
@@ -88,6 +87,27 @@ inline f32 Length( vec2 const& v )
     f32 result = sqrt( v.x * v.x + v.y * v.y );
     return result;
 }
+
+// -------------------------------------------- SARA
+inline vec2 Abs( vec2 const& v )
+{
+    vec2 result;
+    if (v.x <  0)
+        result.x = v.x*(-1);
+    else
+        result.x = v.x;
+    if (v.y <  0)
+        result.y = v.y*(-1);
+    else
+        result.y = v.y;
+    return result;
+}
+
+inline f32 clamp(f32 n, f32 lower, f32 upper) {
+  return std::max(lower, std::min(n, upper));
+}
+
+// ------------------------------------------------
 
 inline f32 LengthSquared( vec2 const& v )
 {
@@ -107,19 +127,18 @@ inline vec2 Normalize( vec2 const& v )
     }
     return result;
 }
-
 inline f32 Cross( vec2 const& v, vec2 const& w )
 {
     f32 result{ v.x * w.y - v.y * w.x };
     return result;
 }
-
+// wtf ?
 inline vec2 Cross( vec2 const& v, f32 s )
 {
     vec2 result{ s * v.y, -s * v.x };
     return result;
 }
-
+// wtf ?
 inline vec2 Cross( f32 s, vec2 const& v )
 {
     vec2 result{ -s * v.y, s * v.x };
@@ -151,13 +170,13 @@ struct Mat2
 //     {
 //         f32 m[2][2];
 //         f32 v[4];
-//         
+//
 //         struct
 //         {
 //             f32 m00, m01;
 //             f32 m10, m11;
 //         };
-//     };    
+//     };
   f32 m00,m01;
   f32 m10,m11;
 };
