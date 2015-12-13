@@ -208,8 +208,7 @@ void CollisionInfo::Solve()const
     if(Length(a->velocity) == 0 && Length(b->velocity) == 0)
         return;
 
-    vec2 rA = a->position - this->contactPoint ;
-    vec2 rB = b->position - this->contactPoint ;
+
     vec2 vrel = ( b->velocity) - ( a->velocity );
     f32 vSurNorm = Dot( vrel, normal );
 
