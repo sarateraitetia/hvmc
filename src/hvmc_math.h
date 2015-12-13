@@ -4,7 +4,7 @@
 #include <cmath>
 #include <algorithm>
 #include <limits>
-
+#include <iostream>
 typedef char      i8;
 typedef short     i16;
 typedef int       i32;
@@ -18,21 +18,8 @@ typedef unsigned long long u64;
 typedef float  f32;
 typedef double f64;
 
-// Sara was here !!!
-
-struct vec2
-{
-//   c++11
-//     union
-//     {
-//         f32 v[2] = { 0 };
-//
-//         struct
-//         {
-//             f32 x, y;
-//         };
-//     };
-  f32 x,y;
+struct vec2 {
+    f32 x, y;
 };
 
 inline vec2 operator+( vec2 const& v, vec2 const& w )
@@ -51,6 +38,14 @@ inline vec2 operator-( vec2 const& v, vec2 const& w )
 {
     vec2 result{ v.x - w.x, v.y - w.y };
     return result;
+}
+
+
+inline std::ostream& operator<<(std::ostream &flux, vec2 const& v)
+{
+    //Affichage des attributs
+    flux <<"x = " << v.x << " ; y = " << v.y << "\n";
+    return flux;
 }
 
 inline vec2 operator-( vec2 const& v )
@@ -76,6 +71,7 @@ inline vec2 operator/( vec2 const& v, f32 s )
     vec2 result{ v.x /s, v.y / s };
     return result;
 }
+
 inline f32 Dot( vec2 const& v, vec2 const& w )
 {
     f32 result = v.x * w.x + v.y * w.y;
@@ -87,27 +83,6 @@ inline f32 Length( vec2 const& v )
     f32 result = sqrt( v.x * v.x + v.y * v.y );
     return result;
 }
-
-// -------------------------------------------- SARA
-inline vec2 Abs( vec2 const& v )
-{
-    vec2 result;
-    if (v.x <  0)
-        result.x = v.x*(-1);
-    else
-        result.x = v.x;
-    if (v.y <  0)
-        result.y = v.y*(-1);
-    else
-        result.y = v.y;
-    return result;
-}
-
-inline f32 clamp(f32 n, f32 lower, f32 upper) {
-  return std::max(lower, std::min(n, upper));
-}
-
-// ------------------------------------------------
 
 inline f32 LengthSquared( vec2 const& v )
 {
@@ -127,18 +102,19 @@ inline vec2 Normalize( vec2 const& v )
     }
     return result;
 }
+
 inline f32 Cross( vec2 const& v, vec2 const& w )
 {
     f32 result{ v.x * w.y - v.y * w.x };
     return result;
 }
-// wtf ?
+
 inline vec2 Cross( vec2 const& v, f32 s )
 {
     vec2 result{ s * v.y, -s * v.x };
     return result;
 }
-// wtf ?
+
 inline vec2 Cross( f32 s, vec2 const& v )
 {
     vec2 result{ -s * v.y, s * v.x };
@@ -163,22 +139,9 @@ inline vec2 Max( vec2 const& v, vec2 const& w )
     return result;
 }
 
-struct Mat2
-{
-  // c++11
-//     union
-//     {
-//         f32 m[2][2];
-//         f32 v[4];
-//
-//         struct
-//         {
-//             f32 m00, m01;
-//             f32 m10, m11;
-//         };
-//     };
-  f32 m00,m01;
-  f32 m10,m11;
+struct Mat2 {
+    f32 m00, m01;
+    f32 m10, m11;
 };
 
 inline Mat2 Mat2_Zeros()
@@ -213,4 +176,20 @@ inline Mat2 Mat2_Transpose( Mat2 const& m )
     return result;
 }
 
+inline f32 clamp(f32 n, f32 lower, f32 upper) {
+  return std::max(lower, std::min(n, upper));
+}
+inline vec2 Abs( vec2 const& v )
+{
+    vec2 result;
+    if (v.x <  0)
+        result.x = v.x*(-1);
+    else
+        result.x = v.x;
+    if (v.y <  0)
+        result.y = v.y*(-1);
+    else
+        result.y = v.y;
+    return result;
+}
 #endif
