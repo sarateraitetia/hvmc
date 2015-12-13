@@ -22,11 +22,9 @@ struct CollisionInfo{
 
 
 bool collide(RigidBody* a,RigidBody* b, CollisionInfo &info);
-bool collideSphereSphere(RigidBody* a, RigidBody* b, CollisionInfo& info);
+bool CollideSphereSphere(RigidBody* a, RigidBody* b, CollisionInfo& info);
 bool collideBoxBox(RigidBody* a, RigidBody* b, CollisionInfo& info);
 bool collideBoxSphere(RigidBody* b, RigidBody* a, CollisionInfo& info);
-
-
 
 #endif
 
