@@ -1,191 +1,240 @@
 #include "hvmc_collisions.h"
-#include "hvmc_math.h"
-#include <iostream>
 #include "hvmc_physics.h"
+#include <iostream>
 
-
-
-struct RigidBody;
-
-// ---------------------------------------------------------------------------- SARA
-bool collideSphereSphere(RigidBody* a, RigidBody* b, CollisionInfo& info)
+bool CollideSphereSphere(RigidBody* a, RigidBody* b, CollisionInfo& info)
 {
-    vec2 vecAB = (b->position - a->position);
-    f32 diff_centre = LengthSquared(b->position - a->position);
-    f32 diff_rayon = (a->collider.radius + b->collider.radius) * (a->collider.radius + b->collider.radius);
+    vec2 dist = b->position - a->position;
+    f32 r = b->collider.radius + a->collider.radius;
 
-
-    if(diff_rayon >= diff_centre)
-    {
-//        std::cerr << "il y a eu collision cercle-cercle" << std::endl;
-
-        // 1) On fige les RigidBody
-        //a->SetKinematic();
-        //b->SetKinematic();
-
-        // 2) On crée notre CollisionInfo
-        info.a = a;
-        info.b = b;
-        info.normal =  vecAB / Length(vecAB);
-
-        info.penetration = b->collider.radius + a->collider.radius - Length(vecAB);
-
-        info.contactPoint = a->position + a->collider.radius * info.normal;
-
-
-//        f32 p = Length(vecAB)-(a->collider.radius + b->collider.radius);
-//        info.penetration = p * info.normal;
-        return true;
-    }
-
-    return false;
-}
-
-bool collideBoxBox(RigidBody* a, RigidBody* b, CollisionInfo& info){
-
-
-        vec2 D = Abs( b->position-a->position ) - (a->collider.dims/2+ b->collider.dims/2);
-        // si il y a collision
-        if (D.x < 0 && D.y < 0)
-        {
-            //std::cerr << "il y a eu collision box-box" << std::endl;
-
-            // 1) On fige les RigidBody
-//            a->SetKinematic();
-//            b->SetKinematic();
-
-            // 2) On crée notre CollisionInfo
-            info.a = a;
-            info.b = b;
-            info.contactPoint = a->position + (b->position - a->position)/2;
-            // approximation ?
-            if (D.x < D.y){
-                if(b->position.x > a->position.x){
-                    info.normal = {1.0f,0.0f};
-
-                }
-                else{
-                    info.normal = {-1.0f,0.0f};
-                }
-                info.penetration = D.x;
-            }else{
-                if(b->position.y > a->position.y){
-                    info.normal = {0.0f,1.0f};
-
-                }
-                else{
-                    info.normal = {0.0f,-1.0f};
-                }
-                info.penetration = D.y;
-
-            }
-//            info.normal = {0.0f,1.0f};
-            std::cout << "info.normal : "  <<info.normal.x << " "<<info.normal.y << std::endl;
-            return true;
-        }
-
+    if(LengthSquared(dist) >r*r)
         return false;
-}
 
-// a = box et b = circle
-bool collideBoxSphere(RigidBody* a, RigidBody* b, CollisionInfo& info){
- vec2 p;
- f32 xextend = a->collider.dims.x/2;
-
- // demi longueur
- f32 yextend = a->collider.dims.y/2;
- // demi hauteur
- vec2 ab = b->position - a->position;
- p.x = clamp(a->position.x+ab.x,a->position.x-xextend, a->position.x+xextend);
- p.y = clamp(a->position.y+ab.y,a->position.y-yextend, a->position.y+yextend);
- if(LengthSquared(p-b->position) < (b->collider.radius*b->collider.radius)){
-     //std::cerr << "il y a eu collision box-cercle" << LengthSquared(p-a->position) << "<" << (b->collider.radius*b->collider.radius) <<std::endl;
+    f32 d = Length(dist);
 
     info.a = a;
     info.b = b;
-//    info.penetration =  p.y-b->position.y;
-//    info.contactPoint = p;
+    // si les deux sphere ne sont pas collées
+    if(d!=0)
+    {
+        info.penetration = r - d;
+        info.normal = dist / d;
+        info.contactPoint = a->position + a->collider.radius * info.normal;
 
-//    info.normal = b->position - a->position;
-//    info.normal = info.normal / Length(info.normal);
-
-     // 1) On fige les RigidBody
-     a->SetKinematic();
-     b->SetKinematic();
-
-     return true;
- }
-
- return false;
+        return true;
+    }
+    else // sinon elle sont collées
+    {
+        info.penetration = a->collider.radius;
+        vec2 n; n.x = 1; n.y=0;
+        info.normal = n;
+        return true;
+    }
 }
 
+bool CollideBoxBox(RigidBody* a, RigidBody* b, CollisionInfo& info)
+{
 
-bool collide( RigidBody* a, RigidBody* b, CollisionInfo& info ) {
+    vec2 D = Abs( b->position-a->position ) - (a->collider.dims/2+ b->collider.dims/2);
+    // si il y a collision
 
+    if (D.x < 0 && D.y < 0)
+    {
+
+
+        info.a = a;
+        info.b = b;
+
+        // approximation ?
+        if (D.x > D.y){
+            if(b->position.x > a->position.x){
+                info.normal = {1.0f,0.0f};
+
+            }
+            else{
+                info.normal = {-1.0f,0.0f};
+            }
+            info.penetration = -D.x;
+        }else{
+            if(b->position.y > a->position.y){
+                info.normal = {0.0f,1.0f};
+
+            }
+            else{
+                info.normal = {0.0f,-1.0f};
+            }
+            info.penetration = -D.y;
+
+        }
+        return true;
+    }
+
+
+    // SAT IMPLEMENTATION //prblème de positions T_T
+    //    vec2 dist = b->position - a->position;
+
+    //    f32 a_ext = a->collider.dims.x /2 ;
+    //    f32 b_ext = b->collider.dims.x/2;
+
+    //    f32 x_overlap = a_ext + b_ext - abs(dist.x);
+
+    //    info.a = a;
+    //    info.b = b;
+    //    if(x_overlap > 0)// collision en x
+    //    {
+
+    //        f32 aa_ext = a->collider.dims.y/2;
+    //        f32 bb_ext = b->collider.dims.y/2;
+
+    //        f32 y_overlap = aa_ext + bb_ext - abs(dist.y);
+
+    //        if(y_overlap > 0)// collision en y
+    //        {
+    //            if(x_overlap > y_overlap)
+    //            {
+    //                if(dist.x < 0)//b à gauche de a
+    //                    info.normal = {-1.0f,0.0f};
+
+    //                else//b à droite de a
+    //                    info.normal = {1.0f,0.0f};
+
+    //                info.penetration = x_overlap;
+    //            }
+    //            else
+    //            {
+    //                if(dist.y < 0)//b en bas de a
+    //                    info.normal = {0.0f,-1.0f};
+    //                else//b en haut de a
+    //                    info.normal = {0.0f,1.0f};
+
+    //                info.penetration = y_overlap;
+
+
+    //            }
+    //            return true;
+    //        }
+    //    }
+
+    return false;
+
+}
+// b = box / a = sphere
+bool CollideBoxSphere(RigidBody* b, RigidBody* a, CollisionInfo& info)
+{
+    vec2 dist = b->position - a->position ;
+
+    f32 x_ext = b->collider.dims.x /2;
+    f32 y_ext = b->collider.dims.y /2;
+
+    vec2 cp = dist; // contact point
+    cp.x = clamp(cp.x,-x_ext,x_ext);
+    cp.y = clamp(cp.y,-y_ext,y_ext);
+
+    info.a = a;
+    info.b = b;
+
+
+    bool inside = false;
+
+    if(dist.x == cp.x && dist.y == cp.y)
+    {
+        inside = true;
+
+        if(abs(dist.x) > abs(dist.y))
+
+        {
+            if(cp.x > 0) // coté droit
+                cp.x = x_ext;
+            else// coté gauche
+                cp.x = -x_ext;
+        }
+        else
+        {
+            if(cp.y >0) // haut
+                cp.y = y_ext;
+            else // bas
+                cp.y = -y_ext;
+        }
+
+    }
+
+    vec2 normal = dist - cp;
+    f32 d = LengthSquared(normal);
+    f32 r = a->collider.radius;
+
+    if((d > r*r) && !inside)
+        return false;
+
+    d = Length(normal);
+
+    if(inside)
+    {
+        info.normal = -normal/d;
+        info.penetration = r-d;
+    }
+    else
+    {
+        info.normal = normal/d;
+        info.penetration = r - d;
+    }
+
+    return true;
+
+}
+
+bool collide(RigidBody* a,RigidBody* b, CollisionInfo &info)
+{
     if ( a->collider.type == RIGID_BODY_BOX )
     {
         if ( b->collider.type == RIGID_BODY_BOX )
-            return collideBoxBox( a, b, info );
+            return CollideBoxBox( a, b, info );
         else if ( b->collider.type == RIGID_BODY_SPHERE )
-            return collideBoxSphere( a, b, info );
+            return CollideBoxSphere( a, b, info );
     }
     else if ( a->collider.type == RIGID_BODY_SPHERE )
     {
         if ( b->collider.type == RIGID_BODY_SPHERE )
-            return collideSphereSphere( a, b, info );
+            return CollideSphereSphere( a, b, info );
         else if ( b->collider.type == RIGID_BODY_BOX )
-            return collideBoxSphere( b, a, info );
+            return CollideBoxSphere( b, a, info );
     }
-    // Should not get there
     return false;
 }
 
-
-
-void CollisionInfo::Solve() const // à finir !!
+void CollisionInfo::Solve()const
 {
 
-//    if(a->collider.type == RIGID_BODY_SPHERE && b->collider.type == RIGID_BODY_SPHERE)
-//    {
-        // prendre le min des coefficients de restitution
-        // e est entre 0(énergie mal restituée) et 1(bonne restitution)
-        f32 e = 1;  // e = min(a,b)
 
-        // résolution des collisions
-        vec2 rA =  a->position - contactPoint ;
-        vec2 rB =  b->position - contactPoint ;
+    if(Length(a->velocity) == 0 && Length(b->velocity) == 0)
+        return;
 
-        vec2 vRel = (b->velocity + Cross(b->angularVelocity, rB)) - (a->velocity + Cross(a->angularVelocity, rA));
+    vec2 rA = a->position - this->contactPoint ;
+    vec2 rB = b->position - this->contactPoint ;
+    vec2 vrel = ( b->velocity) - ( a->velocity );
+    f32 vSurNorm = Dot( vrel, normal );
 
-        f32 J = (-(1+e) * Dot(vRel, normal)) / (a->im+b->im+a->iI*Cross(rA, normal)+b->iI*Cross(rB, normal));
+    if(vSurNorm > 0)
+        return;
 
-        if(Dot(vRel,normal ) < 0)
-        {
-            // impulsion
-            vec2 jA =-J* normal;
-            a->velocity = a->velocity + (jA * a->im);
-            a->angularVelocity = a->angularVelocity + Cross(rA/*erreur ici*/, (jA * a->iI));
+    f32 e = std::min( a->restitution, b->restitution);
+    f32 j = (-(1 + e) * vSurNorm )/ (a->im + b->im );
+    vec2 impulsion = j * normal;
 
-            vec2 jB = J* normal;
-            b->velocity = b->velocity + (jB * b->im);
-            std::cerr << "normal : "<< normal.x << " "<<normal.y << std::endl;
-            b->angularVelocity = b->angularVelocity + Cross(rB, (jB * b->iI));
-        }
-//    }
+
+    a->ApplyImpulse(-impulsion,contactPoint);
+    b->ApplyImpulse(impulsion,contactPoint);
 }
-
-void CollisionInfo::CorrectPositions() const
+void CollisionInfo::CorrectPositions()const
 {
-    if(penetration > 0.01f) // ne pas résoudre si penetration < à un seuil (entre 0.1 et 0.01)
-    {
-    const f32 threshold = 0.01f;
-    const f32 percentage = 0.5f; // entre 20 et 80%
 
-    vec2 correction = (std::max(penetration - threshold, 0.0f) / (a->im + b->im)) * percentage * normal;
+    if(a->im == 0 && b->im == 0)
+        return;
 
-    a->position = a->position - (a->im * correction);
-    b->position = b->position + (b->im * correction);
-    }
+    f32 threshold = 0.01f;
+    const f32 pourcentage =1.0f;
+
+    vec2 correction = std::max(penetration - threshold,0.0f) / (a->im + b->im) * pourcentage * normal;
+    a->position = a->position -  (a->im * correction);
+    b->position += b->im * correction;
+
 }
-
-// ----------------------------------------------------------------------------------
